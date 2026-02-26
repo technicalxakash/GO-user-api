@@ -88,3 +88,61 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
 	_, err := q.db.ExecContext(ctx, updateUser, arg.Name, arg.Dob, arg.ID)
 	return err
 }
+
+const updateUserWithEmail = `-- name: UpdateUserWithEmail :exec
+UPDATE users
+SET name = ?, email = ?, dob = ?
+WHERE id = ?
+`
+
+type UpdateUserWithEmailParams struct {
+	Name  string
+	Email string
+	Dob   time.Time
+	ID    int32
+}
+
+func (q *Queries) UpdateUserWithEmail(ctx context.Context, arg UpdateUserWithEmailParams) error {
+	_, err := q.db.ExecContext(ctx, updateUserWithEmail, arg.Name, arg.Email, arg.Dob, arg.ID)
+	return err
+}
+
+const createUserWithAuth = `-- name: CreateUserWithAuth :exec
+INSERT INTO users (name, email, password_hash, role, dob)
+VALUES (?, ?, ?, ?, ?)
+`
+
+type CreateUserWithAuthParams struct {
+	Name         string
+	Email        string
+	PasswordHash string
+	Role         string
+	Dob          time.Time
+}
+
+func (q *Queries) CreateUserWithAuth(ctx context.Context, arg CreateUserWithAuthParams) error {
+	_, err := q.db.ExecContext(ctx, createUserWithAuth, arg.Name, arg.Email, arg.PasswordHash, arg.Role, arg.Dob)
+	return err
+}
+
+const getUserByEmail = `-- name: GetUserByEmail :one
+SELECT id, name, email, password_hash, role, dob, created_at, updated_at FROM users WHERE email = ?
+`
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error) {
+	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
+	var i GetUserByEmailRow
+	err := row.Scan(&i.ID, &i.Name, &i.Email, &i.PasswordHash, &i.Role, &i.Dob, &i.CreatedAt, &i.UpdatedAt)
+	return i, err
+}
+
+const getUserByID = `-- name: GetUserByID :one
+SELECT id, name, email, password_hash, role, dob, created_at, updated_at FROM users WHERE id = ?
+`
+
+func (q *Queries) GetUserByID(ctx context.Context, id int32) (GetUserByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, getUserByID, id)
+	var i GetUserByIDRow
+	err := row.Scan(&i.ID, &i.Name, &i.Email, &i.PasswordHash, &i.Role, &i.Dob, &i.CreatedAt, &i.UpdatedAt)
+	return i, err
+}

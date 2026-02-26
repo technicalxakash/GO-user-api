@@ -20,13 +20,17 @@ func ConnectDB() *sql.DB {
 
 	db, err := sql.Open("mysql", cfg.FormatDSN())
 	if err != nil {
+		log.Println("❌ ERROR: Failed to open database:", err)
 		log.Fatal(err)
 	}
 
 	// Test the connection
 	if err := db.Ping(); err != nil {
+		log.Println("❌ ERROR: Failed to connect to database:", err)
 		log.Fatal("Failed to connect to database:", err)
 	}
+
+	log.Println(" Database connected successfully")
 
 	return db
 }

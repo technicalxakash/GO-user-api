@@ -97,17 +97,37 @@ func (h *UserHandler) UpdateUser(c *fiber.Ctx) error {
 
 	id, _ := strconv.Atoi(c.Params("id"))
 
-	req := new(models.CreateUserRequest)
-	c.BodyParser(req)
-
-	dob, _ := time.Parse("2006-01-02", req.DOB)
-
-	err := h.repo.Update(c.Context(), int32(id), req.Name, dob)
-	if err != nil {
-		return fiber.ErrInternalServerError
+	req := new(models.UpdateUserRequest)
+	if err := c.BodyParser(req); err != nil {
+		return sendErrorResponse(c, 400, "INVALID_REQUEST", "Invalid request body")
 	}
 
-	return c.JSON(req)
+	if err := h.validate.Struct(req); err != nil {
+		return sendErrorResponse(c, 400, "VALIDATION_ERROR", err.Error())
+	}
+
+	dob, err := time.Parse("2006-01-02", req.DOB)
+	if err != nil {
+		return sendErrorResponse(c, 400, "INVALID_DATE", "Invalid date format")
+	}
+
+	// Check if email already exists for another user
+	existingUser, _ := h.repo.GetUserByEmail(c.Context(), req.Email)
+	if existingUser != nil && existingUser.ID != int32(id) {
+		return sendErrorResponse(c, 400, "EMAIL_EXISTS", "Email already registered")
+	}
+
+	err = h.repo.UpdateWithEmail(c.Context(), int32(id), req.Name, req.Email, dob)
+	if err != nil {
+		logger.Log.Error("Failed to update user", zap.Error(err))
+		return sendErrorResponse(c, 500, "INTERNAL_ERROR", "Failed to update user")
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "User updated successfully",
+		"name":    req.Name,
+		"email":   req.Email,
+	})
 }
 
 func (h *UserHandler) DeleteUser(c *fiber.Ctx) error {

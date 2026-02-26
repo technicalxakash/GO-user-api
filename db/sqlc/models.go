@@ -5,11 +5,39 @@
 package sqlc
 
 import (
+	"database/sql"
 	"time"
 )
 
 type User struct {
-	ID   int32
-	Name string
-	Dob  time.Time
+	ID           int32
+	Name         string
+	Dob          time.Time
+	Email        sql.NullString
+	PasswordHash sql.NullString
+	Role         sql.NullString
+	CreatedAt    sql.NullTime
+	UpdatedAt    sql.NullTime
+}
+
+type GetUserByEmailRow struct {
+	ID           int32
+	Name         string
+	Email        string
+	PasswordHash string
+	Role         string
+	Dob          time.Time
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+}
+
+type GetUserByIDRow struct {
+	ID           int32
+	Name         string
+	Email        string
+	PasswordHash string
+	Role         string
+	Dob          time.Time
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
